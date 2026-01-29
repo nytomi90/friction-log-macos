@@ -14,6 +14,8 @@ class FrictionViewModel: ObservableObject {
 
     @Published var items: [FrictionItemResponse] = []
     @Published var currentScore: CurrentScore?
+    @Published var trendData: [TrendDataPoint] = []
+    @Published var categoryBreakdown: CategoryBreakdown?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -151,6 +153,33 @@ class FrictionViewModel: ObservableObject {
         } catch {
             errorMessage = "Failed to load score: \(error.localizedDescription)"
         }
+    }
+
+    func loadTrend(days: Int = 30) async {
+        do {
+            trendData = try await apiClient.getFrictionTrend(days: days)
+        } catch {
+            errorMessage = "Failed to load trend data: \(error.localizedDescription)"
+        }
+    }
+
+    func loadCategoryBreakdown() async {
+        do {
+            categoryBreakdown = try await apiClient.getCategoryBreakdown()
+        } catch {
+            errorMessage = "Failed to load category breakdown: \(error.localizedDescription)"
+        }
+    }
+
+    func loadAllAnalytics(trendDays: Int = 30) async {
+        isLoading = true
+        errorMessage = nil
+
+        await loadScore()
+        await loadTrend(days: trendDays)
+        await loadCategoryBreakdown()
+
+        isLoading = false
     }
 
     // MARK: - Helper Methods
