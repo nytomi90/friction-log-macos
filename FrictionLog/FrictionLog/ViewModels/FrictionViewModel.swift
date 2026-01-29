@@ -282,6 +282,7 @@ class FrictionViewModel: ObservableObject {
         // Reset notification flags if it's a new day
         let calendar = Calendar.current
         if !calendar.isDate(lastNotificationDate, inSameDayAs: Date()) {
+            print("🔄 New day detected - resetting notification flags")
             notifiedAt75Percent = false
             notifiedAt90Percent = false
             notifiedAt100Percent = false
@@ -291,8 +292,11 @@ class FrictionViewModel: ObservableObject {
         // Check if global limit is set
         guard let percentage = score.globalLimitPercentage,
               let limit = score.globalDailyLimit else {
+            print("⚪️ No global limit set, skipping threshold check")
             return
         }
+
+        print("📊 Checking thresholds: \(percentage)% (\(score.weightedEncountersToday)/\(limit))")
 
         #if os(macOS)
         let content = UNMutableNotificationContent()
@@ -300,6 +304,7 @@ class FrictionViewModel: ObservableObject {
 
         // Check thresholds and send appropriate notifications
         if percentage >= 100 && !notifiedAt100Percent {
+            print("🔴 Sending 100% notification")
             content.title = "🔴 Daily Limit Exceeded!"
             content.body = "You've exceeded your daily friction limit! Impact: \(score.weightedEncountersToday)/\(limit) points (\(percentage)%)"
             notifiedAt100Percent = true
@@ -309,9 +314,16 @@ class FrictionViewModel: ObservableObject {
                 content: content,
                 trigger: nil
             )
-            UNUserNotificationCenter.current().add(request)
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Failed to send 100% notification: \(error.localizedDescription)")
+                } else {
+                    print("✅ 100% notification sent successfully")
+                }
+            }
 
         } else if percentage >= 90 && !notifiedAt90Percent {
+            print("⚠️ Sending 90% notification")
             content.title = "⚠️ Almost at Daily Limit"
             content.body = "You're at \(percentage)% of your daily friction limit. Impact: \(score.weightedEncountersToday)/\(limit) points"
             notifiedAt90Percent = true
@@ -321,9 +333,16 @@ class FrictionViewModel: ObservableObject {
                 content: content,
                 trigger: nil
             )
-            UNUserNotificationCenter.current().add(request)
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Failed to send 90% notification: \(error.localizedDescription)")
+                } else {
+                    print("✅ 90% notification sent successfully")
+                }
+            }
 
         } else if percentage >= 75 && !notifiedAt75Percent {
+            print("💡 Sending 75% notification")
             content.title = "💡 Approaching Daily Limit"
             content.body = "You're at \(percentage)% of your daily friction limit. Impact: \(score.weightedEncountersToday)/\(limit) points"
             notifiedAt75Percent = true
@@ -333,7 +352,15 @@ class FrictionViewModel: ObservableObject {
                 content: content,
                 trigger: nil
             )
-            UNUserNotificationCenter.current().add(request)
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Failed to send 75% notification: \(error.localizedDescription)")
+                } else {
+                    print("✅ 75% notification sent successfully")
+                }
+            }
+        } else {
+            print("⚪️ No threshold reached yet or already notified (75%: \(notifiedAt75Percent), 90%: \(notifiedAt90Percent), 100%: \(notifiedAt100Percent))")
         }
         #endif
     }

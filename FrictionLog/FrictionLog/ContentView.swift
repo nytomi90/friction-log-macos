@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 struct ContentView: View {
     @StateObject private var viewModel = FrictionViewModel()
@@ -34,27 +35,69 @@ struct ContentView: View {
                     .tag(2)
             }
 
-            // Help button
-            Button {
-                showHelp = true
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(Color.blue.opacity(0.1))
-                        .frame(width: 32, height: 32)
+            // Help and Test Buttons
+            HStack(spacing: 8) {
+                // Test Notification button
+                Button {
+                    testNotification()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.1))
+                            .frame(width: 32, height: 32)
 
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.title3)
-                        .foregroundColor(.blue)
+                        Image(systemName: "bell.badge.fill")
+                            .font(.title3)
+                            .foregroundColor(.orange)
+                    }
                 }
+                .buttonStyle(.plain)
+                .help("Test notifications")
+
+                // Help button
+                Button {
+                    showHelp = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.1))
+                            .frame(width: 32, height: 32)
+
+                        Image(systemName: "questionmark.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                    }
+                }
+                .buttonStyle(.plain)
+                .help("Learn how to use Friction Log")
             }
-            .buttonStyle(.plain)
             .padding(16)
-            .help("Learn how to use Friction Log")
         }
         .frame(minWidth: 900, minHeight: 700)
         .sheet(isPresented: $showHelp) {
             HelpSheet(isPresented: $showHelp)
+        }
+    }
+
+    private func testNotification() {
+        print("🔔 Testing notification...")
+        let content = UNMutableNotificationContent()
+        content.title = "🔔 Test Notification"
+        content.body = "If you see this, notifications are working! You'll receive alerts when approaching your daily friction limit."
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "test-notification-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Failed to send test notification: \(error.localizedDescription)")
+            } else {
+                print("✅ Test notification sent successfully")
+            }
         }
     }
 }
