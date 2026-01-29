@@ -8,89 +8,125 @@
 import SwiftUI
 
 struct AddFrictionView: View {
-    @StateObject private var apiClient = APIClient()
+    @ObservedObject var viewModel: FrictionViewModel
     @State private var title = ""
     @State private var description = ""
     @State private var annoyanceLevel = 3
     @State private var selectedCategory: Category = .home
 
-    @State private var isSaving = false
-    @State private var showSuccess = false
-    @State private var error: String?
-
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Add Friction Item")
-                .font(.largeTitle)
-                .bold()
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Add Friction Item")
+                    .font(.largeTitle)
+                    .bold()
 
-            Form {
-                Section("Details") {
-                    TextField("Title", text: $title)
-                        .textFieldStyle(.roundedBorder)
+                Form {
+                    Section("Details") {
+                        TextField("Title", text: $title)
+                            .textFieldStyle(.roundedBorder)
 
-                    TextField("Description (optional)", text: $description, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .lineLimit(3...6)
-                }
+                        TextField("Description (optional)", text: $description, axis: .vertical)
+                            .textFieldStyle(.roundedBorder)
+                            .lineLimit(3...6)
+                    }
 
-                Section("Annoyance Level") {
-                    VStack(alignment: .leading) {
-                        HStack {
-                            Text("1")
-                            Slider(value: Binding(
-                                get: { Double(annoyanceLevel) },
-                                set: { annoyanceLevel = Int($0) }
-                            ), in: 1...5, step: 1)
-                            Text("5")
+                    Section("Annoyance Level") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Low")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Slider(value: Binding(
+                                    get: { Double(annoyanceLevel) },
+                                    set: { annoyanceLevel = Int($0) }
+                                ), in: 1...5, step: 1)
+                                Text("High")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            HStack {
+                                ForEach(1...5, id: \.self) { level in
+                                    Image(systemName: level <= annoyanceLevel ? "star.fill" : "star")
+                                        .foregroundColor(annoyanceColor)
+                                        .font(.title3)
+                                }
+                                Spacer()
+                                Text("Level \(annoyanceLevel)")
+                                    .font(.headline)
+                                    .foregroundColor(annoyanceColor)
+                            }
                         }
-                        Text("Level: \(annoyanceLevel)")
-                            .font(.headline)
-                            .foregroundColor(annoyanceColor)
+                        .padding(.vertical, 4)
+                    }
+
+                    Section("Category") {
+                        Picker("Category", selection: $selectedCategory) {
+                            ForEach(Category.allCases) { category in
+                                Text(category.displayName).tag(category)
+                            }
+                        }
+                        .pickerStyle(.segmented)
                     }
                 }
+                .formStyle(.grouped)
 
-                Section("Category") {
-                    Picker("Category", selection: $selectedCategory) {
-                        ForEach(Category.allCases) { category in
-                            Text(category.displayName).tag(category)
-                        }
+                // Messages
+                if let error = viewModel.errorMessage {
+                    HStack {
+                        Image(systemName: "exclamationmark.circle")
+                        Text(error)
                     }
-                    .pickerStyle(.segmented)
-                }
-            }
-            .formStyle(.grouped)
-
-            if let error = error {
-                Text(error)
                     .foregroundColor(.red)
-                    .font(.caption)
-            }
-
-            HStack {
-                Button("Clear") {
-                    clearForm()
+                    .font(.callout)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(8)
                 }
-                .buttonStyle(.bordered)
 
-                Button("Add Friction Item") {
-                    Task {
-                        await saveFrictionItem()
+                if let success = viewModel.successMessage {
+                    HStack {
+                        Image(systemName: "checkmark.circle")
+                        Text(success)
                     }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(title.isEmpty || isSaving)
-            }
-
-            if showSuccess {
-                Text("✓ Friction item added successfully!")
                     .foregroundColor(.green)
-                    .font(.headline)
-            }
+                    .font(.callout)
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(8)
+                }
 
-            Spacer()
+                // Action buttons
+                HStack(spacing: 12) {
+                    Button("Clear") {
+                        clearForm()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.isLoading)
+
+                    Button {
+                        Task {
+                            await saveFrictionItem()
+                        }
+                    } label: {
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.horizontal, 20)
+                        } else {
+                            Text("Add Friction Item")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(title.isEmpty || viewModel.isLoading)
+                }
+                .padding(.top, 8)
+
+                Spacer(minLength: 20)
+            }
+            .padding()
         }
-        .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -104,30 +140,18 @@ struct AddFrictionView: View {
     }
 
     private func saveFrictionItem() async {
-        isSaving = true
-        error = nil
-        showSuccess = false
+        viewModel.clearMessages()
 
-        let item = FrictionItemCreate(
+        let success = await viewModel.createItem(
             title: title,
-            description: description.isEmpty ? nil : description,
+            description: description,
             annoyanceLevel: annoyanceLevel,
             category: selectedCategory
         )
 
-        do {
-            _ = try await apiClient.createFrictionItem(item)
-            showSuccess = true
+        if success {
             clearForm()
-
-            // Hide success message after 3 seconds
-            try? await Task.sleep(for: .seconds(3))
-            showSuccess = false
-        } catch {
-            self.error = error.localizedDescription
         }
-
-        isSaving = false
     }
 
     private func clearForm() {
@@ -139,5 +163,5 @@ struct AddFrictionView: View {
 }
 
 #Preview {
-    AddFrictionView()
+    AddFrictionView(viewModel: FrictionViewModel())
 }

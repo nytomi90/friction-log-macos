@@ -8,85 +8,99 @@
 import SwiftUI
 
 struct FrictionListView: View {
-    @StateObject private var apiClient = APIClient()
-    @State private var items: [FrictionItemResponse] = []
-    @State private var isLoading = false
-    @State private var error: String?
+    @ObservedObject var viewModel: FrictionViewModel
 
     var body: some View {
-        VStack {
-            Text("Friction Items")
-                .font(.largeTitle)
-                .bold()
-                .padding()
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Friction Items")
+                    .font(.largeTitle)
+                    .bold()
+                Spacer()
+                Button {
+                    Task {
+                        await viewModel.loadItems()
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.bordered)
+                .disabled(viewModel.isLoading)
+            }
+            .padding()
 
-            if isLoading {
+            // Content
+            if viewModel.isLoading && viewModel.items.isEmpty {
+                Spacer()
                 ProgressView("Loading items...")
-            } else if let error = error {
-                VStack {
+                Spacer()
+            } else if let error = viewModel.errorMessage, viewModel.items.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.orange)
                     Text(error)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                     Button("Retry") {
                         Task {
-                            await loadItems()
+                            await viewModel.loadItems()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
                 }
-            } else if items.isEmpty {
-                VStack {
+                Spacer()
+            } else if viewModel.items.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
                     Image(systemName: "tray")
-                        .font(.largeTitle)
+                        .font(.system(size: 48))
                         .foregroundColor(.gray)
                     Text("No friction items yet")
+                        .font(.title3)
                         .foregroundColor(.secondary)
                     Text("Add your first item to get started")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 .padding()
+                Spacer()
             } else {
-                List(items) { item in
-                    FrictionItemRow(item: item)
+                List {
+                    ForEach(viewModel.items) { item in
+                        FrictionItemRow(item: item, viewModel: viewModel)
+                    }
                 }
             }
-
-            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
-            await loadItems()
+            await viewModel.loadItems()
         }
-    }
-
-    private func loadItems() async {
-        isLoading = true
-        error = nil
-
-        do {
-            items = try await apiClient.listFrictionItems()
-        } catch {
-            self.error = error.localizedDescription
-        }
-
-        isLoading = false
     }
 }
 
 struct FrictionItemRow: View {
     let item: FrictionItemResponse
+    @ObservedObject var viewModel: FrictionViewModel
+    @State private var showingDeleteConfirmation = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(item.title)
                     .font(.headline)
                 Spacer()
-                Text("\(item.annoyanceLevel)/5")
-                    .font(.subheadline)
-                    .foregroundColor(.orange)
+                HStack(spacing: 4) {
+                    ForEach(1...5, id: \.self) { level in
+                        Image(systemName: level <= item.annoyanceLevel ? "star.fill" : "star")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                    }
+                }
             }
 
             HStack {
@@ -104,6 +118,31 @@ struct FrictionItemRow: View {
                     .background(statusColor.opacity(0.2))
                     .foregroundColor(statusColor)
                     .cornerRadius(4)
+
+                Spacer()
+
+                // Quick status change buttons
+                Menu {
+                    ForEach(Status.allCases, id: \.self) { status in
+                        Button(status.displayName) {
+                            Task {
+                                _ = await viewModel.updateItem(item.id, status: status)
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .foregroundColor(.blue)
+                }
+                .menuStyle(.borderlessButton)
+
+                Button {
+                    showingDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(.plain)
             }
 
             if let description = item.description {
@@ -114,6 +153,16 @@ struct FrictionItemRow: View {
             }
         }
         .padding(.vertical, 4)
+        .alert("Delete Item", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                Task {
+                    _ = await viewModel.deleteItem(item.id)
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete '\(item.title)'?")
+        }
     }
 
     private var statusColor: Color {
@@ -126,5 +175,5 @@ struct FrictionItemRow: View {
 }
 
 #Preview {
-    FrictionListView()
+    FrictionListView(viewModel: FrictionViewModel())
 }

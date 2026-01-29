@@ -30,7 +30,6 @@ enum APIError: Error, LocalizedError {
     }
 }
 
-@MainActor
 class APIClient: ObservableObject {
     private let baseURL: String
     private let session: URLSession
