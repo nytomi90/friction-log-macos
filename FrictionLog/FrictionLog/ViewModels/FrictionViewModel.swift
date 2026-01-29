@@ -26,6 +26,12 @@ class FrictionViewModel: ObservableObject {
 
     private let apiClient: APIClient
 
+    // Track which threshold notifications we've sent today
+    private var notifiedAt75Percent = false
+    private var notifiedAt90Percent = false
+    private var notifiedAt100Percent = false
+    private var lastNotificationDate = Date()
+
     // MARK: - Initialization
 
     init(apiClient: APIClient = APIClient()) {
@@ -222,9 +228,14 @@ class FrictionViewModel: ObservableObject {
             await loadScore()
             await loadMostAnnoyingItems()
 
-            // Check if limit exceeded and show notification
+            // Check if individual item limit exceeded
             if updatedItem.isLimitExceeded {
                 requestNotification(for: updatedItem)
+            }
+
+            // Check global daily limit and send threshold notifications
+            if let score = currentScore {
+                checkGlobalLimitThresholds(score: score)
             }
 
             return true
@@ -264,6 +275,66 @@ class FrictionViewModel: ObservableObject {
         )
 
         UNUserNotificationCenter.current().add(request)
+        #endif
+    }
+
+    private func checkGlobalLimitThresholds(score: CurrentScore) {
+        // Reset notification flags if it's a new day
+        let calendar = Calendar.current
+        if !calendar.isDate(lastNotificationDate, inSameDayAs: Date()) {
+            notifiedAt75Percent = false
+            notifiedAt90Percent = false
+            notifiedAt100Percent = false
+            lastNotificationDate = Date()
+        }
+
+        // Check if global limit is set
+        guard let percentage = score.globalLimitPercentage,
+              let limit = score.globalDailyLimit else {
+            return
+        }
+
+        #if os(macOS)
+        let content = UNMutableNotificationContent()
+        content.sound = .default
+
+        // Check thresholds and send appropriate notifications
+        if percentage >= 100 && !notifiedAt100Percent {
+            content.title = "🔴 Daily Limit Exceeded!"
+            content.body = "You've exceeded your daily friction limit! Impact: \(score.weightedEncountersToday)/\(limit) points (\(percentage)%)"
+            notifiedAt100Percent = true
+
+            let request = UNNotificationRequest(
+                identifier: "global-limit-100",
+                content: content,
+                trigger: nil
+            )
+            UNUserNotificationCenter.current().add(request)
+
+        } else if percentage >= 90 && !notifiedAt90Percent {
+            content.title = "⚠️ Almost at Daily Limit"
+            content.body = "You're at \(percentage)% of your daily friction limit. Impact: \(score.weightedEncountersToday)/\(limit) points"
+            notifiedAt90Percent = true
+
+            let request = UNNotificationRequest(
+                identifier: "global-limit-90",
+                content: content,
+                trigger: nil
+            )
+            UNUserNotificationCenter.current().add(request)
+
+        } else if percentage >= 75 && !notifiedAt75Percent {
+            content.title = "💡 Approaching Daily Limit"
+            content.body = "You're at \(percentage)% of your daily friction limit. Impact: \(score.weightedEncountersToday)/\(limit) points"
+            notifiedAt75Percent = true
+
+            let request = UNNotificationRequest(
+                identifier: "global-limit-75",
+                content: content,
+                trigger: nil
+            )
+            UNUserNotificationCenter.current().add(request)
+        }
         #endif
     }
 }
