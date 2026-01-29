@@ -9,6 +9,10 @@ import SwiftUI
 
 struct FrictionListView: View {
     @ObservedObject var viewModel: FrictionViewModel
+    @State private var selectedStatus: Status?
+    @State private var selectedCategory: Category?
+    @State private var showingEditSheet = false
+    @State private var itemToEdit: FrictionItemResponse?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,7 +24,7 @@ struct FrictionListView: View {
                 Spacer()
                 Button {
                     Task {
-                        await viewModel.loadItems()
+                        await loadWithFilters()
                     }
                 } label: {
                     Image(systemName: "arrow.clockwise")
@@ -29,6 +33,58 @@ struct FrictionListView: View {
                 .disabled(viewModel.isLoading)
             }
             .padding()
+
+            // Filters
+            VStack(alignment: .leading, spacing: 12) {
+                // Status filter
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Filter by Status")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("Status", selection: $selectedStatus) {
+                        Text("All").tag(nil as Status?)
+                        ForEach(Status.allCases, id: \.self) { status in
+                            Text(status.displayName).tag(status as Status?)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: selectedStatus) { _ in
+                        Task {
+                            await loadWithFilters()
+                        }
+                    }
+                }
+
+                // Category filter
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Filter by Category")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("Category", selection: $selectedCategory) {
+                        Text("All").tag(nil as Category?)
+                        ForEach(Category.allCases) { category in
+                            Text(category.displayName).tag(category as Category?)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: selectedCategory) { _ in
+                        Task {
+                            await loadWithFilters()
+                        }
+                    }
+                }
+
+                // Results count
+                if !viewModel.items.isEmpty {
+                    Text("\(viewModel.items.count) item\(viewModel.items.count == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 12)
+
+            Divider()
 
             // Content
             if viewModel.isLoading && viewModel.items.isEmpty {
@@ -47,7 +103,7 @@ struct FrictionListView: View {
                         .padding(.horizontal)
                     Button("Retry") {
                         Task {
-                            await viewModel.loadItems()
+                            await loadWithFilters()
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -59,33 +115,63 @@ struct FrictionListView: View {
                     Image(systemName: "tray")
                         .font(.system(size: 48))
                         .foregroundColor(.gray)
-                    Text("No friction items yet")
+                    Text(filtersActive ? "No items match filters" : "No friction items yet")
                         .font(.title3)
                         .foregroundColor(.secondary)
-                    Text("Add your first item to get started")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    if filtersActive {
+                        Button("Clear Filters") {
+                            selectedStatus = nil
+                            selectedCategory = nil
+                        }
+                        .buttonStyle(.bordered)
+                    } else {
+                        Text("Add your first item to get started")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 .padding()
                 Spacer()
             } else {
                 List {
                     ForEach(viewModel.items) { item in
-                        FrictionItemRow(item: item, viewModel: viewModel)
+                        FrictionItemRow(
+                            item: item,
+                            viewModel: viewModel,
+                            onEdit: {
+                                itemToEdit = item
+                                showingEditSheet = true
+                            }
+                        )
                     }
+                }
+                .refreshable {
+                    await loadWithFilters()
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
-            await viewModel.loadItems()
+            await loadWithFilters()
         }
+        .sheet(item: $itemToEdit) { item in
+            EditFrictionView(item: item, viewModel: viewModel, isPresented: $showingEditSheet)
+        }
+    }
+
+    private var filtersActive: Bool {
+        selectedStatus != nil || selectedCategory != nil
+    }
+
+    private func loadWithFilters() async {
+        await viewModel.loadItems(status: selectedStatus, category: selectedCategory)
     }
 }
 
 struct FrictionItemRow: View {
     let item: FrictionItemResponse
     @ObservedObject var viewModel: FrictionViewModel
+    let onEdit: () -> Void
     @State private var showingDeleteConfirmation = false
 
     var body: some View {
@@ -121,21 +207,16 @@ struct FrictionItemRow: View {
 
                 Spacer()
 
-                // Quick status change buttons
-                Menu {
-                    ForEach(Status.allCases, id: \.self) { status in
-                        Button(status.displayName) {
-                            Task {
-                                _ = await viewModel.updateItem(item.id, status: status)
-                            }
-                        }
-                    }
+                // Edit button
+                Button {
+                    onEdit()
                 } label: {
                     Image(systemName: "pencil.circle")
                         .foregroundColor(.blue)
                 }
-                .menuStyle(.borderlessButton)
+                .buttonStyle(.plain)
 
+                // Delete button
                 Button {
                     showingDeleteConfirmation = true
                 } label: {

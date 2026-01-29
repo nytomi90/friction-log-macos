@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02627E50930A8DE381F40B6C /* EditFrictionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827715894C0B1F27647D3ECA /* EditFrictionView.swift */; };
 		0F9C514C7B27646FFE8ECE40 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610CDE45DF6C3F49A6CA56B9 /* Status.swift */; };
 		1B42CBF3D807C28D815F5660 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71CD5B885EDEFE89334A069 /* APIClient.swift */; };
 		1BC16BA1118D459054B0C723 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC5F7AB943506AECA4913FBB /* Analytics.swift */; };
@@ -29,6 +30,7 @@
 		7446B04C1D030C31E0408ACE /* FrictionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrictionViewModel.swift; sourceTree = "<group>"; };
 		7F7B54B355821CCE80959B68 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		80C4772D5EDB349015A32429 /* FrictionItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrictionItem.swift; sourceTree = "<group>"; };
+		827715894C0B1F27647D3ECA /* EditFrictionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditFrictionView.swift; sourceTree = "<group>"; };
 		A14DB322E4413CB76EAD71DB /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		B55DD3682D4B57C81FB4BE66 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BD2D58D11463B22A70C377FD /* FrictionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrictionListView.swift; sourceTree = "<group>"; };
@@ -51,6 +53,7 @@
 			children = (
 				4B4BB17F59221B32F2ED2D78 /* AddFrictionView.swift */,
 				A14DB322E4413CB76EAD71DB /* DashboardView.swift */,
+				827715894C0B1F27647D3ECA /* EditFrictionView.swift */,
 				BD2D58D11463B22A70C377FD /* FrictionListView.swift */,
 			);
 			path = Views;
@@ -182,6 +185,7 @@
 				40E2ED494C58DD43665EA697 /* Category.swift in Sources */,
 				7D7F0B215375B15F80363EA8 /* ContentView.swift in Sources */,
 				BC57496EFB4CBD3C65A27B42 /* DashboardView.swift in Sources */,
+				02627E50930A8DE381F40B6C /* EditFrictionView.swift in Sources */,
 				74FC0057A6D39135CAE1395E /* FrictionItem.swift in Sources */,
 				DC55BEB1B4C49889A8051865 /* FrictionListView.swift in Sources */,
 				42125733D2A49E19D6F941B1 /* FrictionLogApp.swift in Sources */,
