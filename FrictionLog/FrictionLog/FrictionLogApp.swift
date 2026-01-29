@@ -6,9 +6,14 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct FrictionLogApp: App {
+    init() {
+        requestNotificationPermissions()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -23,5 +28,9 @@ struct FrictionLogApp: App {
                     .disabled(true)
             }
         }
+    }
+
+    private func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 }

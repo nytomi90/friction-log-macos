@@ -60,6 +60,27 @@ struct DashboardView: View {
                     if let score = viewModel.currentScore {
                         CurrentScoreCard(score: score)
                             .padding(.horizontal)
+
+                        // Warning section for exceeded limits
+                        if score.itemsOverLimit > 0 {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("\(score.itemsOverLimit) item\(score.itemsOverLimit == 1 ? "" : "s") exceeded daily limit")
+                                        .font(.headline)
+                                        .foregroundColor(.orange)
+                                    Text("\(score.totalEncountersToday) total encounters today")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color.orange.opacity(0.1))
+                            .cornerRadius(8)
+                            .padding(.horizontal)
+                        }
                     }
 
                     // Trend Chart

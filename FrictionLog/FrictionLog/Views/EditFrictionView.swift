@@ -204,7 +204,11 @@ struct EditFrictionView: View {
             status: .notFixed,
             createdAt: Date(),
             updatedAt: Date(),
-            fixedAt: nil
+            fixedAt: nil,
+            encounterCount: 0,
+            encounterLimit: nil,
+            lastEncounterDate: nil,
+            isLimitExceeded: false
         ),
         viewModel: FrictionViewModel(),
         isPresented: .constant(true)
