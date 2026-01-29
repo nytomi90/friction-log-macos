@@ -70,6 +70,12 @@ struct DashboardView: View {
                         .padding(.horizontal)
                     }
 
+                    // Most Annoying Items
+                    if !viewModel.mostAnnoyingItems.isEmpty {
+                        MostAnnoyingItemsCard(items: viewModel.mostAnnoyingItems)
+                            .padding(.horizontal)
+                    }
+
                     // Current Score Card
                     if let score = viewModel.currentScore {
                         CurrentScoreCard(score: score)
@@ -165,7 +171,7 @@ struct GlobalDailyLimitCard: View {
             }
 
             HStack(spacing: 8) {
-                Text("\(score.totalEncountersToday)")
+                Text("\(score.weightedEncountersToday)")
                     .font(.system(size: 36, weight: .bold))
                     .foregroundColor(limitColor)
                 Text("/")
@@ -175,6 +181,10 @@ struct GlobalDailyLimitCard: View {
                     .font(.system(size: 36, weight: .bold))
                     .foregroundColor(.secondary)
             }
+
+            Text("(\(score.totalEncountersToday) encounters × annoyance level)")
+                .font(.caption)
+                .foregroundColor(.secondary)
 
             if let percentage = score.globalLimitPercentage {
                 Text(statusText(percentage: percentage))
@@ -437,6 +447,86 @@ struct CategoryBreakdownCard: View {
         case .digital: return .orange
         case .health: return .green
         case .other: return .gray
+        }
+    }
+}
+
+// MARK: - Most Annoying Items Card
+
+struct MostAnnoyingItemsCard: View {
+    let items: [MostAnnoyingItem]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("🔥 Most Annoying Today")
+                    .font(.title2)
+                    .bold()
+                Spacer()
+            }
+
+            VStack(spacing: 8) {
+                ForEach(items) { item in
+                    HStack(spacing: 12) {
+                        // Rank indicator
+                        Text("\(items.firstIndex(where: { $0.id == item.id })! + 1)")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            .frame(width: 24)
+
+                        // Item details
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.title)
+                                .font(.headline)
+                                .lineLimit(1)
+                            HStack(spacing: 8) {
+                                // Annoyance level stars
+                                HStack(spacing: 2) {
+                                    ForEach(0..<item.annoyanceLevel, id: \.self) { _ in
+                                        Image(systemName: "star.fill")
+                                            .font(.caption2)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                                Text("•")
+                                    .foregroundColor(.secondary)
+                                Text("\(item.encounterCount) encounters")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+
+                        Spacer()
+
+                        // Impact score
+                        VStack(spacing: 2) {
+                            Text("\(item.impact)")
+                                .font(.title3)
+                                .bold()
+                                .foregroundColor(impactColor(item.impact))
+                            Text("impact")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(12)
+                    .background(Color.gray.opacity(0.05))
+                    .cornerRadius(8)
+                }
+            }
+        }
+        .padding()
+        .background(Color.gray.opacity(0.08))
+        .cornerRadius(12)
+    }
+
+    private func impactColor(_ impact: Int) -> Color {
+        if impact >= 20 {
+            return .red
+        } else if impact >= 10 {
+            return .orange
+        } else {
+            return .primary
         }
     }
 }

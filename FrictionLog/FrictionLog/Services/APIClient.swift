@@ -190,6 +190,10 @@ class APIClient: ObservableObject {
         try await request("/api/analytics/by-category")
     }
 
+    func getMostAnnoyingItems(limit: Int = 5) async throws -> [MostAnnoyingItem] {
+        try await request("/api/analytics/most-annoying?limit=\(limit)")
+    }
+
     // MARK: - Settings
 
     func getGlobalDailyLimit() async throws -> Int? {

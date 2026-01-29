@@ -17,6 +17,7 @@ class FrictionViewModel: ObservableObject {
     @Published var currentScore: CurrentScore?
     @Published var trendData: [TrendDataPoint] = []
     @Published var categoryBreakdown: CategoryBreakdown?
+    @Published var mostAnnoyingItems: [MostAnnoyingItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
@@ -169,6 +170,14 @@ class FrictionViewModel: ObservableObject {
         }
     }
 
+    func loadMostAnnoyingItems(limit: Int = 5) async {
+        do {
+            mostAnnoyingItems = try await apiClient.getMostAnnoyingItems(limit: limit)
+        } catch {
+            errorMessage = "Failed to load most annoying items: \(error.localizedDescription)"
+        }
+    }
+
     func loadAllAnalytics(trendDays: Int = 30) async {
         isLoading = true
         errorMessage = nil
@@ -176,6 +185,7 @@ class FrictionViewModel: ObservableObject {
         await loadScore()
         await loadTrend(days: trendDays)
         await loadCategoryBreakdown()
+        await loadMostAnnoyingItems()
 
         isLoading = false
     }

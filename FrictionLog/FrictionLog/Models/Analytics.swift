@@ -12,6 +12,7 @@ struct CurrentScore: Codable {
     let activeCount: Int
     let itemsOverLimit: Int
     let totalEncountersToday: Int
+    let weightedEncountersToday: Int
     let globalDailyLimit: Int?
     let globalLimitPercentage: Int?
 
@@ -20,6 +21,7 @@ struct CurrentScore: Codable {
         case activeCount = "active_count"
         case itemsOverLimit = "items_over_limit"
         case totalEncountersToday = "total_encounters_today"
+        case weightedEncountersToday = "weighted_encounters_today"
         case globalDailyLimit = "global_daily_limit"
         case globalLimitPercentage = "global_limit_percentage"
     }
@@ -75,5 +77,27 @@ struct CategoryBreakdown: Codable {
         case .health: return health
         case .other: return other
         }
+    }
+}
+
+struct MostAnnoyingItem: Codable, Identifiable {
+    let id: Int
+    let title: String
+    let annoyanceLevel: Int
+    let encounterCount: Int
+    let impact: Int
+    let category: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case annoyanceLevel = "annoyance_level"
+        case encounterCount = "encounter_count"
+        case impact
+        case category
+    }
+
+    var categoryEnum: Category? {
+        Category(rawValue: category)
     }
 }
