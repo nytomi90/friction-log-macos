@@ -16,6 +16,9 @@ DerivedData/
 *.ipa
 *.xcuserstate
 *.xcscmblueprint
+project.xcworkspace/
+*.xcworkspace/
+*.backup
 
 # CocoaPods
 Pods/
