@@ -15,5 +15,13 @@ struct FrictionLogApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
+        .commands {
+            // View menu commands
+            CommandGroup(after: .sidebar) {
+                Divider()
+                Text("Switch View")
+                    .disabled(true)
+            }
+        }
     }
 }
