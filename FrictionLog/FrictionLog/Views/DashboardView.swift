@@ -87,10 +87,10 @@ struct DashboardView: View {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundColor(.orange)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(score.itemsOverLimit) item\(score.itemsOverLimit == 1 ? "" : "s") exceeded daily limit")
+                                    Text("\(score.itemsOverLimit) item\(score.itemsOverLimit == 1 ? "" : "s") exceeded their encounter limit")
                                         .font(.headline)
                                         .foregroundColor(.orange)
-                                    Text("\(score.totalEncountersToday) total encounters today")
+                                    Text("Impact: \(score.weightedEncountersToday) points from \(score.totalEncountersToday) encounters")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -182,9 +182,14 @@ struct GlobalDailyLimitCard: View {
                     .foregroundColor(.secondary)
             }
 
-            Text("(\(score.totalEncountersToday) encounters × annoyance level)")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(spacing: 2) {
+                Text("Daily Friction Impact Score")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("(\(score.totalEncountersToday) encounters × annoyance levels)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
 
             if let percentage = score.globalLimitPercentage {
                 Text(statusText(percentage: percentage))
@@ -196,9 +201,23 @@ struct GlobalDailyLimitCard: View {
                     .foregroundColor(.secondary)
             }
 
-            Text("Daily Encounters")
-                .font(.subheadline)
+            Text("Total Friction Impact Today")
+                .font(.caption)
                 .foregroundColor(.secondary)
+                .bold()
+
+            // Help text
+            if score.globalDailyLimit == nil {
+                Text("💡 Tip: Set a limit above to track daily friction")
+                    .font(.caption2)
+                    .foregroundColor(.blue)
+                    .padding(.top, 4)
+            } else if let percentage = score.globalLimitPercentage, percentage > 0 {
+                Text("Example: 3 encounters × level 5 = 15 points")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(24)
@@ -238,13 +257,13 @@ struct GlobalDailyLimitCard: View {
 
     private func statusText(percentage: Int) -> String {
         if percentage < 50 {
-            return "You're doing great! (\(percentage)%)"
+            return "Great! Low friction impact (\(percentage)%)"
         } else if percentage < 75 {
-            return "Getting close (\(percentage)%)"
+            return "Moderate friction today (\(percentage)%)"
         } else if percentage < 100 {
-            return "Almost at limit (\(percentage)%)"
+            return "High friction - almost at limit! (\(percentage)%)"
         } else {
-            return "Daily limit exceeded! (\(percentage)%)"
+            return "⚠️ Daily impact limit exceeded! (\(percentage)%)"
         }
     }
 }
@@ -258,21 +277,36 @@ struct EditGlobalLimitSheet: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Set Daily Encounter Limit")
+            Text("🎯 Set Daily Impact Limit")
                 .font(.title2)
                 .bold()
 
-            Text("Set a maximum number of encounters across all friction items per day")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 8) {
+                Text("Set a maximum friction impact score per day")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
 
-            TextField("Daily limit", text: $limit)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 200)
-                .onSubmit {
-                    onSave()
-                }
+                Text("Impact = Encounters × Annoyance Level")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(6)
+            }
+
+            VStack(spacing: 4) {
+                Text("Daily Impact Limit")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                TextField("e.g., 50", text: $limit)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 200)
+                    .onSubmit {
+                        onSave()
+                    }
+            }
 
             HStack(spacing: 12) {
                 Button("Cancel", action: onCancel)
