@@ -13,6 +13,8 @@ struct AddFrictionView: View {
     @State private var description = ""
     @State private var annoyanceLevel = 3
     @State private var selectedCategory: Category = .home
+    @State private var encounterLimit: String = ""
+    @State private var hasEncounterLimit = false
 
     var body: some View {
         ScrollView {

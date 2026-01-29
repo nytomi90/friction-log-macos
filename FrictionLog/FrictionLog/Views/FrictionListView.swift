@@ -188,6 +188,9 @@ struct FrictionItemRow: View {
                     }
                 }
             }
+            .padding(item.isLimitExceeded ? 8 : 0)
+            .background(item.isLimitExceeded ? Color.red.opacity(0.1) : Color.clear)
+            .cornerRadius(item.isLimitExceeded ? 6 : 0)
 
             HStack {
                 Text(item.category.displayName)
@@ -206,6 +209,31 @@ struct FrictionItemRow: View {
                     .cornerRadius(4)
 
                 Spacer()
+
+                // Encounter button
+                if item.status != .fixed {
+                    Button {
+                        Task {
+                            _ = await viewModel.incrementEncounter(item.id)
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "hand.tap.fill")
+                            if let limit = item.encounterLimit {
+                                Text("\(item.encounterCount)/\(limit)")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(item.isLimitExceeded ? .red : .primary)
+                            } else {
+                                Text("\(item.encounterCount)")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(item.isLimitExceeded ? .red : .blue)
+                }
 
                 // Edit button
                 Button {

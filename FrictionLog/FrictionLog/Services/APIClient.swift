@@ -172,6 +172,10 @@ class APIClient: ObservableObject {
         try await requestWithoutResponse("/api/friction-items/\(id)", method: "DELETE")
     }
 
+    func incrementEncounter(_ id: Int) async throws -> FrictionItemResponse {
+        try await request("/api/friction-items/\(id)/encounter", method: "POST", body: Optional<String>.none)
+    }
+
     // MARK: - Analytics
 
     func getCurrentScore() async throws -> CurrentScore {

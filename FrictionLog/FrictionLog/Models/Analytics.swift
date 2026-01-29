@@ -10,10 +10,14 @@ import Foundation
 struct CurrentScore: Codable {
     let currentScore: Int
     let activeCount: Int
+    let itemsOverLimit: Int
+    let totalEncountersToday: Int
 
     enum CodingKeys: String, CodingKey {
         case currentScore = "current_score"
         case activeCount = "active_count"
+        case itemsOverLimit = "items_over_limit"
+        case totalEncountersToday = "total_encounters_today"
     }
 }
 

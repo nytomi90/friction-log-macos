@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import UserNotifications
 
 @MainActor
 class FrictionViewModel: ObservableObject {
@@ -45,7 +46,7 @@ class FrictionViewModel: ObservableObject {
         isLoading = false
     }
 
-    func createItem(title: String, description: String?, annoyanceLevel: Int, category: Category) async -> Bool {
+    func createItem(title: String, description: String?, annoyanceLevel: Int, category: Category, encounterLimit: Int? = nil) async -> Bool {
         isLoading = true
         errorMessage = nil
         successMessage = nil
@@ -54,7 +55,8 @@ class FrictionViewModel: ObservableObject {
             title: title,
             description: description?.isEmpty == false ? description : nil,
             annoyanceLevel: annoyanceLevel,
-            category: category
+            category: category,
+            encounterLimit: encounterLimit
         )
 
         do {
@@ -79,7 +81,7 @@ class FrictionViewModel: ObservableObject {
         }
     }
 
-    func updateItem(_ id: Int, title: String? = nil, description: String? = nil, annoyanceLevel: Int? = nil, category: Category? = nil, status: Status? = nil) async -> Bool {
+    func updateItem(_ id: Int, title: String? = nil, description: String? = nil, annoyanceLevel: Int? = nil, category: Category? = nil, status: Status? = nil, encounterLimit: Int? = nil) async -> Bool {
         isLoading = true
         errorMessage = nil
 
@@ -88,7 +90,8 @@ class FrictionViewModel: ObservableObject {
             description: description,
             annoyanceLevel: annoyanceLevel,
             category: category,
-            status: status
+            status: status,
+            encounterLimit: encounterLimit
         )
 
         do {
@@ -192,4 +195,46 @@ class FrictionViewModel: ObservableObject {
             return false
         }
     }
+
+    func incrementEncounter(_ id: Int) async -> Bool {
+        do {
+            let updatedItem = try await apiClient.incrementEncounter(id)
+
+            // Update item in local list
+            if let index = items.firstIndex(where: { $0.id == id }) {
+                items[index] = updatedItem
+            }
+
+            // Refresh score
+            await loadScore()
+
+            // Check if limit exceeded and show notification
+            if updatedItem.isLimitExceeded {
+                requestNotification(for: updatedItem)
+            }
+
+            return true
+        } catch {
+            errorMessage = "Failed to increment encounter: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    private func requestNotification(for item: FrictionItemResponse) {
+        #if os(macOS)
+        let content = UNMutableNotificationContent()
+        content.title = "Friction Limit Exceeded"
+        content.body = "\"\(item.title)\" has reached its daily limit (\(item.encounterCount)/\(item.encounterLimit ?? 0))"
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "limit-exceeded-\(item.id)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
+        #endif
+    }
 }
+
