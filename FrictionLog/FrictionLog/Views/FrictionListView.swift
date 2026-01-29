@@ -201,115 +201,176 @@ struct ModernFrictionCard: View {
     let onEdit: () -> Void
     @State private var showingDeleteConfirmation = false
     @State private var isHovered = false
+    @State private var justTapped = false
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Category Icon
-            ZStack {
-                Circle()
-                    .fill(item.category.gradient)
-                    .frame(width: 56, height: 56)
+        VStack(spacing: 0) {
+            HStack(spacing: 16) {
+                // Category Icon
+                ZStack {
+                    Circle()
+                        .fill(item.category.gradient)
+                        .frame(width: 56, height: 56)
 
-                Text(item.category.emoji)
-                    .font(.system(size: 28))
-            }
-            .shadow(color: item.category.color.opacity(0.3), radius: 8, x: 0, y: 4)
-
-            // Content
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(item.title)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-
-                    Spacer()
-
-                    // Status badge
-                    HStack(spacing: 4) {
-                        Text(item.status.emoji)
-                        Text(item.status.displayName)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(item.status.color.opacity(0.15))
-                    .foregroundColor(item.status.color)
-                    .cornerRadius(12)
+                    Text(item.category.emoji)
+                        .font(.system(size: 28))
                 }
+                .shadow(color: item.category.color.opacity(0.3), radius: 8, x: 0, y: 4)
 
-                if let description = item.description, !description.isEmpty {
-                    Text(description)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                }
+                // Content
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(item.title)
+                            .font(.headline)
+                            .foregroundColor(.primary)
 
-                HStack(spacing: 12) {
-                    // Annoyance level
-                    HStack(spacing: 2) {
-                        ForEach(1...5, id: \.self) { level in
-                            Image(systemName: level <= item.annoyanceLevel ? "flame.fill" : "flame")
-                                .foregroundColor(level <= item.annoyanceLevel ? .orange : .gray.opacity(0.3))
+                        Spacer()
+
+                        // Status badge
+                        HStack(spacing: 4) {
+                            Text(item.status.emoji)
+                            Text(item.status.displayName)
                                 .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(item.status.color.opacity(0.15))
+                        .foregroundColor(item.status.color)
+                        .cornerRadius(12)
+                    }
+
+                    if let description = item.description, !description.isEmpty {
+                        Text(description)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    HStack(spacing: 12) {
+                        // Annoyance level
+                        HStack(spacing: 2) {
+                            Text("Impact:")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            ForEach(1...5, id: \.self) { level in
+                                Image(systemName: level <= item.annoyanceLevel ? "flame.fill" : "flame")
+                                    .foregroundColor(level <= item.annoyanceLevel ? .orange : .gray.opacity(0.3))
+                                    .font(.caption)
+                            }
+                        }
+
+                        Spacer()
+
+                        // Encounter count display
+                        if item.encounterCount > 0 {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.caption2)
+                                Text("Today: \(item.encounterCount)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.secondary)
+                        }
+
+                        // Actions
+                        HStack(spacing: 8) {
+                            Button {
+                                onEdit()
+                            } label: {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.blue)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                showingDeleteConfirmation = true
+                            } label: {
+                                Image(systemName: "trash.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
+                }
+            }
+            .padding(16)
 
-                    Spacer()
+            // Big Encounter Button (only for non-fixed items)
+            if item.status != .fixed {
+                Divider()
+                    .padding(.horizontal, 16)
 
-                    // Encounter button
-                    if item.status != .fixed {
-                        Button {
-                            Task {
-                                _ = await viewModel.incrementEncounter(item.id)
-                            }
-                        } label: {
+                Button {
+                    Task {
+                        justTapped = true
+                        _ = await viewModel.incrementEncounter(item.id)
+                        try? await Task.sleep(for: .milliseconds(300))
+                        justTapped = false
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        // Tap icon
+                        ZStack {
+                            Circle()
+                                .fill(encounterButtonColor.opacity(0.15))
+                                .frame(width: 44, height: 44)
+
+                            Image(systemName: justTapped ? "checkmark.circle.fill" : "hand.tap.fill")
+                                .font(.title2)
+                                .foregroundColor(encounterButtonColor)
+                        }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(justTapped ? "✓ Recorded!" : "I just experienced this!")
+                                .font(.headline)
+                                .foregroundColor(encounterButtonColor)
+
                             HStack(spacing: 6) {
-                                Image(systemName: "hand.tap.fill")
-                                    .font(.caption)
                                 if let limit = item.encounterLimit {
-                                    Text("\(item.encounterCount)/\(limit)")
+                                    Text("\(item.encounterCount) / \(limit) encounters today")
                                         .font(.caption)
-                                        .fontWeight(.bold)
+                                    if item.isLimitExceeded {
+                                        Text("• Over limit!")
+                                            .font(.caption)
+                                            .bold()
+                                    }
                                 } else {
-                                    Text("\(item.encounterCount)")
+                                    Text("\(item.encounterCount) encounter\(item.encounterCount == 1 ? "" : "s") today")
                                         .font(.caption)
-                                        .fontWeight(.bold)
                                 }
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(item.isLimitExceeded ? Color.red.opacity(0.15) : Color.blue.opacity(0.15))
-                            .foregroundColor(item.isLimitExceeded ? .red : .blue)
-                            .cornerRadius(8)
+                            .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.plain)
-                    }
 
-                    // Actions
-                    HStack(spacing: 8) {
-                        Button {
-                            onEdit()
-                        } label: {
-                            Image(systemName: "pencil.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.blue)
-                        }
-                        .buttonStyle(.plain)
+                        Spacer()
 
-                        Button {
-                            showingDeleteConfirmation = true
-                        } label: {
-                            Image(systemName: "trash.circle.fill")
+                        // Impact score indicator
+                        VStack(spacing: 2) {
+                            Text("+\(item.annoyanceLevel)")
                                 .font(.title3)
-                                .foregroundColor(.red)
+                                .bold()
+                                .foregroundColor(encounterButtonColor)
+                            Text("impact")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(encounterButtonColor.opacity(0.1))
+                        .cornerRadius(8)
                     }
+                    .padding(16)
                 }
+                .buttonStyle(.plain)
+                .background(
+                    encounterButtonColor.opacity(isHovered ? 0.05 : 0.02)
+                )
             }
         }
-        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -319,8 +380,9 @@ struct ModernFrictionCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(item.isLimitExceeded ? Color.red.opacity(0.5) : Color.clear, lineWidth: 2)
         )
-        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .scaleEffect(isHovered ? 1.01 : 1.0)
         .animation(.spring(response: 0.3), value: isHovered)
+        .animation(.spring(response: 0.2), value: justTapped)
         .onHover { hovering in
             isHovered = hovering
         }
@@ -335,6 +397,16 @@ struct ModernFrictionCard: View {
             Text("Are you sure you want to delete '\(item.title)'? This action cannot be undone.")
         }
     }
+
+    private var encounterButtonColor: Color {
+        if justTapped {
+            return .green
+        } else if item.isLimitExceeded {
+            return .red
+        } else {
+            return .blue
+        }
+    }
 }
 
 // MARK: - Empty State
@@ -344,7 +416,7 @@ struct EmptyStateView: View {
     let onClearFilters: () -> Void
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             ZStack {
                 Circle()
                     .fill(
@@ -360,19 +432,47 @@ struct EmptyStateView: View {
                     .font(.system(size: 64))
             }
 
-            VStack(spacing: 8) {
-                Text(filtersActive ? "No Results Found" : "All Clear!")
+            VStack(spacing: 12) {
+                Text(filtersActive ? "No Results Found" : "Welcome to Friction Log!")
                     .font(.title2)
                     .bold()
 
-                Text(filtersActive ? "Try adjusting your filters" : "No friction items yet. Add your first one to start tracking!")
+                Text(filtersActive ? "Try adjusting your filters" : "Track the annoying things in your life and work to eliminate them")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
 
-            if filtersActive {
+            if !filtersActive {
+                VStack(spacing: 16) {
+                    HStack(spacing: 16) {
+                        QuickTipCard(
+                            emoji: "➕",
+                            title: "Add Friction",
+                            description: "Go to the Add tab to create your first friction item"
+                        )
+                        QuickTipCard(
+                            emoji: "👆",
+                            title: "Track Encounters",
+                            description: "Tap the big button each time you experience a friction"
+                        )
+                    }
+                    HStack(spacing: 16) {
+                        QuickTipCard(
+                            emoji: "📊",
+                            title: "View Dashboard",
+                            description: "See your friction trends and impact scores"
+                        )
+                        QuickTipCard(
+                            emoji: "🎯",
+                            title: "Set Goals",
+                            description: "Set daily limits to reduce your friction"
+                        )
+                    }
+                }
+                .padding(.horizontal, 40)
+            } else {
                 Button {
                     onClearFilters()
                 } label: {
@@ -387,6 +487,34 @@ struct EmptyStateView: View {
             }
         }
         .padding(40)
+    }
+}
+
+// MARK: - Quick Tip Card
+
+struct QuickTipCard: View {
+    let emoji: String
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(emoji)
+                .font(.system(size: 32))
+
+            Text(title)
+                .font(.caption)
+                .bold()
+
+            Text(description)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(12)
+        .background(Color.gray.opacity(0.05))
+        .cornerRadius(12)
     }
 }
 

@@ -18,20 +18,31 @@ struct DashboardView: View {
         ScrollView {
             VStack(spacing: 24) {
                 // Header
-                HStack {
-                    Text("Friction Dashboard")
-                        .font(.largeTitle)
-                        .bold()
-                    Spacer()
-                    Button {
-                        Task {
-                            await viewModel.loadAllAnalytics(trendDays: trendDays)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        HStack(spacing: 8) {
+                            Text("📊")
+                                .font(.largeTitle)
+                            Text("Dashboard")
+                                .font(.largeTitle)
+                                .bold()
                         }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
+                        Spacer()
+                        Button {
+                            Task {
+                                await viewModel.loadAllAnalytics(trendDays: trendDays)
+                            }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.title3)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.isLoading)
                     }
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.isLoading)
+
+                    Text("Track your daily friction impact and progress")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
                 .padding(.horizontal)
 
