@@ -226,6 +226,15 @@ To build for distribution:
 - Verify all source files are added to the project (see above)
 - Restart Xcode
 
+## Known Issues & Fixes
+
+### Edit Modal Save Feedback (Fixed ✅)
+**Issue**: Modal didn't close immediately after clicking Save, no visual feedback.
+**Fix**: Removed blocking delay, added success checkmark indicator.
+**Commit**: 43f1ded (2026-01-29)
+
+If you encounter any issues, please check the [GitHub Issues](https://github.com/nytomi90/friction-log-macos/issues) page.
+
 ## License
 
 MIT
