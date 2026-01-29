@@ -99,15 +99,10 @@ class FrictionViewModel: ObservableObject {
                 items[index] = updatedItem
             }
 
-            successMessage = "Item updated successfully!"
-
             // Refresh score after updating
             await loadScore()
 
             isLoading = false
-
-            try? await Task.sleep(for: .seconds(2))
-            successMessage = nil
 
             return true
         } catch {

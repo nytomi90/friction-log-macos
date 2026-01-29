@@ -17,6 +17,7 @@ struct EditFrictionView: View {
     @State private var annoyanceLevel: Int
     @State private var selectedCategory: Category
     @State private var selectedStatus: Status
+    @State private var showSuccess: Bool = false
 
     init(item: FrictionItemResponse, viewModel: FrictionViewModel, isPresented: Binding<Bool>) {
         self.item = item
@@ -108,6 +109,18 @@ struct EditFrictionView: View {
                         .cornerRadius(8)
                     }
 
+                    if showSuccess {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Saved successfully!")
+                        }
+                        .foregroundColor(.green)
+                        .font(.callout)
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+
                     Spacer(minLength: 20)
                 }
                 .padding()
@@ -160,6 +173,7 @@ struct EditFrictionView: View {
 
     private func saveChanges() async {
         viewModel.clearMessages()
+        showSuccess = false
 
         let success = await viewModel.updateItem(
             item.id,
@@ -171,6 +185,9 @@ struct EditFrictionView: View {
         )
 
         if success {
+            // Show success message briefly
+            showSuccess = true
+            try? await Task.sleep(for: .milliseconds(500))
             isPresented = false
         }
     }
