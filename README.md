@@ -180,17 +180,50 @@ To build for distribution:
 
 ## Troubleshooting
 
+### Xcode Project Missing Files
+
+**Issue**: If the app won't build with errors about missing files, the Xcode project may be missing some Swift file references.
+
+**Solution**: Add all source files to the Xcode project:
+
+1. In Xcode, right-click on the `FrictionLog` group (the one with the file icon, not the project icon)
+2. Select "Add Files to 'FrictionLog'..."
+3. Navigate to and add these folders/files:
+   - `ViewModels/` folder (select entire folder)
+   - `Views/` folder (select entire folder)
+   - `Models/` folder (select entire folder)
+   - `Services/` folder (select entire folder)
+4. Ensure "Copy items if needed" is **unchecked**
+5. Ensure "Create groups" is selected
+6. Click "Add"
+
+**Files that should be in the project**:
+- `FrictionLogApp.swift`
+- `ContentView.swift`
+- `ViewModels/FrictionViewModel.swift`
+- `Views/DashboardView.swift`
+- `Views/AddFrictionView.swift`
+- `Views/EditFrictionView.swift`
+- `Views/FrictionListView.swift`
+- `Models/FrictionItem.swift`
+- `Models/Category.swift`
+- `Models/Status.swift`
+- `Models/Analytics.swift`
+- `Services/APIClient.swift`
+
 ### Backend Connection Issues
 
 - Ensure backend is running on port 8000
 - Check firewall settings
 - Verify `localhost` resolves correctly
+- Test backend health: `curl http://localhost:8000/health`
 
 ### Build Errors
 
 - Clean build folder: ⇧⌘K
-- Delete DerivedData
+- Delete DerivedData: `rm -rf ~/Library/Developer/Xcode/DerivedData`
 - Regenerate contract models
+- Verify all source files are added to the project (see above)
 - Restart Xcode
 
 ## License
