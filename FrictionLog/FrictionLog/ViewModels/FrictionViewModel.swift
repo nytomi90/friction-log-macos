@@ -206,17 +206,21 @@ class FrictionViewModel: ObservableObject {
         }
     }
 
+    @MainActor
     func incrementEncounter(_ id: Int) async -> Bool {
         do {
             let updatedItem = try await apiClient.incrementEncounter(id)
 
-            // Update item in local list
+            // Force update the items array to trigger UI refresh
             if let index = items.firstIndex(where: { $0.id == id }) {
                 items[index] = updatedItem
+                // Force SwiftUI to detect the change
+                items = items
             }
 
-            // Refresh score
+            // Refresh score and most annoying
             await loadScore()
+            await loadMostAnnoyingItems()
 
             // Check if limit exceeded and show notification
             if updatedItem.isLimitExceeded {
