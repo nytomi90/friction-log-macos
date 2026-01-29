@@ -12,12 +12,34 @@ struct CurrentScore: Codable {
     let activeCount: Int
     let itemsOverLimit: Int
     let totalEncountersToday: Int
+    let globalDailyLimit: Int?
+    let globalLimitPercentage: Int?
 
     enum CodingKeys: String, CodingKey {
         case currentScore = "current_score"
         case activeCount = "active_count"
         case itemsOverLimit = "items_over_limit"
         case totalEncountersToday = "total_encounters_today"
+        case globalDailyLimit = "global_daily_limit"
+        case globalLimitPercentage = "global_limit_percentage"
+    }
+
+    /// Returns emoji indicator based on global limit percentage
+    /// 😊 under 50%, 😐 50-75%, 😰 75-100%, 🔴 over 100%
+    var statusEmoji: String {
+        guard let percentage = globalLimitPercentage else {
+            return "😊" // No limit set, default to happy
+        }
+
+        if percentage < 50 {
+            return "😊"
+        } else if percentage < 75 {
+            return "😐"
+        } else if percentage < 100 {
+            return "😰"
+        } else {
+            return "🔴"
+        }
     }
 }
 

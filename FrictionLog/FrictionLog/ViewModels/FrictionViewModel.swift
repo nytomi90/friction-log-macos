@@ -220,6 +220,22 @@ class FrictionViewModel: ObservableObject {
         }
     }
 
+    func setGlobalDailyLimit(_ limit: Int?) async {
+        do {
+            _ = try await apiClient.setGlobalDailyLimit(limit)
+
+            // Refresh score to show updated limit
+            await loadScore()
+
+            successMessage = limit != nil ? "Daily limit set to \(limit!)" : "Daily limit removed"
+
+            try? await Task.sleep(for: .seconds(2))
+            successMessage = nil
+        } catch {
+            errorMessage = "Failed to set daily limit: \(error.localizedDescription)"
+        }
+    }
+
     private func requestNotification(for item: FrictionItemResponse) {
         #if os(macOS)
         let content = UNMutableNotificationContent()

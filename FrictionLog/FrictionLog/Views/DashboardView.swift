@@ -11,6 +11,8 @@ import Charts
 struct DashboardView: View {
     @ObservedObject var viewModel: FrictionViewModel
     @State private var trendDays = 30
+    @State private var showEditLimit = false
+    @State private var editingLimit = ""
 
     var body: some View {
         ScrollView {
@@ -56,6 +58,18 @@ struct DashboardView: View {
                     }
                     Spacer()
                 } else {
+                    // Global Daily Limit Section
+                    if let score = viewModel.currentScore {
+                        GlobalDailyLimitCard(
+                            score: score,
+                            onEditLimit: {
+                                editingLimit = String(score.globalDailyLimit ?? 20)
+                                showEditLimit = true
+                            }
+                        )
+                        .padding(.horizontal)
+                    }
+
                     // Current Score Card
                     if let score = viewModel.currentScore {
                         CurrentScoreCard(score: score)
@@ -112,6 +126,155 @@ struct DashboardView: View {
         .task {
             await viewModel.loadAllAnalytics(trendDays: trendDays)
         }
+        .sheet(isPresented: $showEditLimit) {
+            EditGlobalLimitSheet(
+                limit: $editingLimit,
+                onSave: {
+                    if let limitValue = Int(editingLimit), limitValue > 0 {
+                        Task {
+                            await viewModel.setGlobalDailyLimit(limitValue)
+                            showEditLimit = false
+                        }
+                    }
+                },
+                onCancel: {
+                    showEditLimit = false
+                }
+            )
+        }
+    }
+}
+
+// MARK: - Global Daily Limit Card
+
+struct GlobalDailyLimitCard: View {
+    let score: CurrentScore
+    let onEditLimit: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text(score.statusEmoji)
+                    .font(.system(size: 48))
+                Spacer()
+                Button(action: onEditLimit) {
+                    Image(systemName: "pencil.circle")
+                        .font(.title2)
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 8) {
+                Text("\(score.totalEncountersToday)")
+                    .font(.system(size: 36, weight: .bold))
+                    .foregroundColor(limitColor)
+                Text("/")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+                Text("\(score.globalDailyLimit ?? 0)")
+                    .font(.system(size: 36, weight: .bold))
+                    .foregroundColor(.secondary)
+            }
+
+            if let percentage = score.globalLimitPercentage {
+                Text(statusText(percentage: percentage))
+                    .font(.headline)
+                    .foregroundColor(limitColor)
+            } else {
+                Text("No daily limit set")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+            }
+
+            Text("Daily Encounters")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .background(limitBackgroundColor)
+        .cornerRadius(12)
+    }
+
+    private var limitColor: Color {
+        guard let percentage = score.globalLimitPercentage else {
+            return .primary
+        }
+
+        if percentage < 50 {
+            return .green
+        } else if percentage < 75 {
+            return .orange
+        } else if percentage < 100 {
+            return .red
+        } else {
+            return .red
+        }
+    }
+
+    private var limitBackgroundColor: Color {
+        guard let percentage = score.globalLimitPercentage else {
+            return Color.gray.opacity(0.08)
+        }
+
+        if percentage >= 100 {
+            return Color.red.opacity(0.1)
+        } else if percentage >= 75 {
+            return Color.orange.opacity(0.1)
+        } else {
+            return Color.green.opacity(0.08)
+        }
+    }
+
+    private func statusText(percentage: Int) -> String {
+        if percentage < 50 {
+            return "You're doing great! (\(percentage)%)"
+        } else if percentage < 75 {
+            return "Getting close (\(percentage)%)"
+        } else if percentage < 100 {
+            return "Almost at limit (\(percentage)%)"
+        } else {
+            return "Daily limit exceeded! (\(percentage)%)"
+        }
+    }
+}
+
+// MARK: - Edit Global Limit Sheet
+
+struct EditGlobalLimitSheet: View {
+    @Binding var limit: String
+    let onSave: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Set Daily Encounter Limit")
+                .font(.title2)
+                .bold()
+
+            Text("Set a maximum number of encounters across all friction items per day")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            TextField("Daily limit", text: $limit)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 200)
+                .onSubmit {
+                    onSave()
+                }
+
+            HStack(spacing: 12) {
+                Button("Cancel", action: onCancel)
+                    .buttonStyle(.bordered)
+
+                Button("Save", action: onSave)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(limit.isEmpty || Int(limit) == nil || Int(limit)! < 1)
+            }
+        }
+        .padding(32)
+        .frame(width: 400)
     }
 }
 

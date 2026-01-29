@@ -189,4 +189,17 @@ class APIClient: ObservableObject {
     func getCategoryBreakdown() async throws -> CategoryBreakdown {
         try await request("/api/analytics/by-category")
     }
+
+    // MARK: - Settings
+
+    func getGlobalDailyLimit() async throws -> Int? {
+        let response: [String: Int?] = try await request("/api/settings/global-daily-limit")
+        return response["limit"] ?? nil
+    }
+
+    func setGlobalDailyLimit(_ limit: Int?) async throws -> Int? {
+        let endpoint = limit != nil ? "/api/settings/global-daily-limit?limit=\(limit!)" : "/api/settings/global-daily-limit"
+        let response: [String: Int?] = try await request(endpoint, method: "PUT", body: Optional<String>.none)
+        return response["limit"] ?? nil
+    }
 }
