@@ -12,6 +12,8 @@ struct ContentView: View {
     @StateObject private var viewModel = FrictionViewModel()
     @State private var selectedTab = 0
     @State private var showHelp = false
+    @State private var notificationStatus = "Checking..."
+    @State private var showStatusAlert = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -37,6 +39,23 @@ struct ContentView: View {
 
             // Help and Test Buttons
             HStack(spacing: 8) {
+                // Check Notification Status button
+                Button {
+                    checkNotificationStatus()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.purple.opacity(0.1))
+                            .frame(width: 32, height: 32)
+
+                        Image(systemName: "info.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(.purple)
+                    }
+                }
+                .buttonStyle(.plain)
+                .help("Check notification permissions")
+
                 // Test Notification button
                 Button {
                     testNotification()
@@ -77,6 +96,11 @@ struct ContentView: View {
         .sheet(isPresented: $showHelp) {
             HelpSheet(isPresented: $showHelp)
         }
+        .alert("Notification Permissions", isPresented: $showStatusAlert) {
+            Button("OK") { showStatusAlert = false }
+        } message: {
+            Text(notificationStatus)
+        }
     }
 
     private func testNotification() {
@@ -98,6 +122,46 @@ struct ContentView: View {
             } else {
                 print("✅ Test notification sent successfully")
             }
+        }
+    }
+
+    private func checkNotificationStatus() {
+        print("📋 Checking notification authorization status...")
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                var statusText = ""
+
+                switch settings.authorizationStatus {
+                case .notDetermined:
+                    statusText = "❓ Notification permissions not yet requested.\n\nThe app will ask for permission on next launch."
+                case .denied:
+                    statusText = "🚫 Notification permissions DENIED.\n\nTo enable:\n1. Open System Settings\n2. Go to Notifications\n3. Find 'FrictionLog'\n4. Enable notifications"
+                case .authorized:
+                    statusText = "✅ Notification permissions GRANTED.\n\nAlert Style: \(settings.alertStyle.description)\nSounds: \(settings.soundSetting == .enabled ? "✓" : "✗")\nBadges: \(settings.badgeSetting == .enabled ? "✓" : "✗")"
+                case .provisional:
+                    statusText = "⚠️ Provisional notification permissions granted."
+                case .ephemeral:
+                    statusText = "⏱️ Ephemeral notification permissions (App Clips)."
+                @unknown default:
+                    statusText = "❔ Unknown authorization status."
+                }
+
+                print("📋 Status: \(statusText)")
+                notificationStatus = statusText
+                showStatusAlert = true
+            }
+        }
+    }
+}
+
+// Extension for AlertStyle description
+extension UNAlertStyle {
+    var description: String {
+        switch self {
+        case .none: return "None"
+        case .banner: return "Banner"
+        case .alert: return "Alert"
+        @unknown default: return "Unknown"
         }
     }
 }
