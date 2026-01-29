@@ -8,10 +8,7 @@
 import SwiftUI
 
 struct DashboardView: View {
-    @StateObject private var apiClient = APIClient()
-    @State private var currentScore: CurrentScore?
-    @State private var isLoading = false
-    @State private var error: String?
+    @ObservedObject var viewModel: FrictionViewModel
 
     var body: some View {
         VStack(spacing: 20) {
@@ -19,26 +16,29 @@ struct DashboardView: View {
                 .font(.largeTitle)
                 .bold()
 
-            if isLoading {
+            if viewModel.isLoading && viewModel.currentScore == nil {
                 ProgressView("Loading...")
-            } else if let error = error {
-                VStack {
+            } else if let error = viewModel.errorMessage {
+                VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.orange)
                     Text(error)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                     Button("Retry") {
                         Task {
-                            await loadData()
+                            await viewModel.loadScore()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
                 }
-            } else if let score = currentScore {
+            } else if let score = viewModel.currentScore {
                 VStack(spacing: 10) {
                     Text("\(score.currentScore)")
                         .font(.system(size: 72, weight: .bold))
-                        .foregroundColor(.blue)
+                        .foregroundColor(scoreColor(score.currentScore))
                     Text("Current Friction Score")
                         .font(.title2)
                         .foregroundColor(.secondary)
@@ -47,13 +47,29 @@ struct DashboardView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
                         .padding(.top, 10)
+
+                    Button("Refresh") {
+                        Task {
+                            await viewModel.loadScore()
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 8)
                 }
-                .padding()
+                .padding(30)
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(12)
             } else {
-                Text("No data available")
-                    .foregroundColor(.secondary)
+                VStack {
+                    Text("No data available")
+                        .foregroundColor(.secondary)
+                    Button("Load Data") {
+                        Task {
+                            await viewModel.loadScore()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             }
 
             Spacer()
@@ -61,24 +77,19 @@ struct DashboardView: View {
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
-            await loadData()
+            await viewModel.loadScore()
         }
     }
 
-    private func loadData() async {
-        isLoading = true
-        error = nil
-
-        do {
-            currentScore = try await apiClient.getCurrentScore()
-        } catch {
-            self.error = error.localizedDescription
+    private func scoreColor(_ score: Int) -> Color {
+        switch score {
+        case 0...10: return .green
+        case 11...25: return .orange
+        default: return .red
         }
-
-        isLoading = false
     }
 }
 
 #Preview {
-    DashboardView()
+    DashboardView(viewModel: FrictionViewModel())
 }

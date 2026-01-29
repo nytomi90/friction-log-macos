@@ -8,23 +8,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var viewModel = FrictionViewModel()
     @State private var selectedTab = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView()
+            DashboardView(viewModel: viewModel)
                 .tabItem {
                     Label("Dashboard", systemImage: "chart.bar.fill")
                 }
                 .tag(0)
 
-            FrictionListView()
+            FrictionListView(viewModel: viewModel)
                 .tabItem {
                     Label("Friction Items", systemImage: "list.bullet")
                 }
                 .tag(1)
 
-            AddFrictionView()
+            AddFrictionView(viewModel: viewModel)
                 .tabItem {
                     Label("Add Item", systemImage: "plus.circle.fill")
                 }

@@ -16,6 +16,7 @@
 		74FC0057A6D39135CAE1395E /* FrictionItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80C4772D5EDB349015A32429 /* FrictionItem.swift */; };
 		7D7F0B215375B15F80363EA8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7B54B355821CCE80959B68 /* ContentView.swift */; };
 		BC57496EFB4CBD3C65A27B42 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14DB322E4413CB76EAD71DB /* DashboardView.swift */; };
+		C05A5FC4283031A6C1EB9E4F /* FrictionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7446B04C1D030C31E0408ACE /* FrictionViewModel.swift */; };
 		C3E92DACD3E3893A3EBD585E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B55DD3682D4B57C81FB4BE66 /* Assets.xcassets */; };
 		DC55BEB1B4C49889A8051865 /* FrictionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2D58D11463B22A70C377FD /* FrictionListView.swift */; };
 /* End PBXBuildFile section */
@@ -25,6 +26,7 @@
 		496E6CE42C3A4C3E5679C57A /* FrictionLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrictionLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4B4BB17F59221B32F2ED2D78 /* AddFrictionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFrictionView.swift; sourceTree = "<group>"; };
 		610CDE45DF6C3F49A6CA56B9 /* Status.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
+		7446B04C1D030C31E0408ACE /* FrictionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrictionViewModel.swift; sourceTree = "<group>"; };
 		7F7B54B355821CCE80959B68 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		80C4772D5EDB349015A32429 /* FrictionItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrictionItem.swift; sourceTree = "<group>"; };
 		A14DB322E4413CB76EAD71DB /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -62,6 +64,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		40EE5FDB858B6F32B037E100 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				7446B04C1D030C31E0408ACE /* FrictionViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 		6993F7CD1CF87030FF5B94B6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -89,6 +99,7 @@
 				36DDB190091B51284B1B35A5 /* FrictionLogApp.swift */,
 				6993F7CD1CF87030FF5B94B6 /* Models */,
 				0AD2238B1EDE121C40CE6E37 /* Services */,
+				40EE5FDB858B6F32B037E100 /* ViewModels */,
 				365652C79A708BAD090B5414 /* Views */,
 			);
 			name = FrictionLog;
@@ -174,6 +185,7 @@
 				74FC0057A6D39135CAE1395E /* FrictionItem.swift in Sources */,
 				DC55BEB1B4C49889A8051865 /* FrictionListView.swift in Sources */,
 				42125733D2A49E19D6F941B1 /* FrictionLogApp.swift in Sources */,
+				C05A5FC4283031A6C1EB9E4F /* FrictionViewModel.swift in Sources */,
 				0F9C514C7B27646FFE8ECE40 /* Status.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
